@@ -15,6 +15,12 @@ object Main {
 
     // 3. Fonctions anonymes (lambdas)
     var addition = (a: Int, b : Int) => a + b
+
+    def maFonction(a : Int, b : Int ) : Int = {
+      return a + b
+    }
+
+    println(mutable)
   }
 }
 
