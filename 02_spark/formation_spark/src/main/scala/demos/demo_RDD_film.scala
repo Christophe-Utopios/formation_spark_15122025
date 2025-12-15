@@ -13,6 +13,11 @@ object demo_RDD_film {
       // Lecture du fichier film.data
       val rddFilm = sc.textFile("./data/film.data")
 
+      // Récupération de la première ligne
+      val firstLine = rddFilm.first()
+    // Filtrage de la première ligne
+      val rdd = rddFilm.filter(ligne => ligne != firstLine)
+
       // Extraction de la valeur qui nous intéresse (3éme colonne)
       val rddNotes = rddFilm.map(line => line.split("\t")(2))
 
@@ -24,6 +29,5 @@ object demo_RDD_film {
         case  (key, value) =>
           println(s"$key = $value")
       }
-
   }
 }
