@@ -65,24 +65,51 @@ object exercice_05 {
 
     // TODO 1: Joindre les ventes avec les produits (utilisez broadcast!)
     // Colonnes attendues : toutes les colonnes de sales + product_name, category, origin_country
+    val salesWithProducts = salesDF.join(
+      broadcast(productsDF),
+      Seq("product_id"),
+      "inner"
+    )
 
     // TODO 2: Ajouter les informations clients (utilisez broadcast!)
     // Colonnes attendues : colonnes précédentes + customer_name, country (du client), membership
-  
+    val salesWithCustomers = salesDF.join(
+      broadcast(customersDF),
+      Seq("customer_id"),
+      "inner"
+    )
 
     // TODO 3: Calculer le montant total de chaque vente (quantity * unit_price)
     // Nouvelle colonne : total_amount
+    val salesWithAmount = salesWithCustomers.withColumn("total_amount", col("quantity") * col("unit_price"))
 
     // TODO 4: Convertir les montants en USD selon le pays du client
     // Utilisez les taux de change avec broadcast
     // Nouvelle colonne : total_amount_usd
+    val salesInUSD = salesWithAmount.join(
+      broadcast(exchangeRatesDF),
+      salesWithAmount("country") === exchangeRatesDF("country"),
+      "inner"
+    ).withColumn(
+      "total_amount_usd",
+      col("total_amount") * col("usd_rate")
+    ).drop(exchangeRatesDF("country")) // éviter la duplication de colonne
 
     // TODO 5: Calculer des statistiques par catégorie de produit
     // Afficher : category, nombre de ventes, montant total USD, montant moyen USD
- 
+    val statsByCategory = salesInUSD.groupBy("category")
+      .agg(
+        count("sale_id").alias("nombre_ventes"),
+        sum("total_amount_usd").alias("montant_total_usd"),
+        avg("total_amount_usd").alias("montant_moyen_usd")
+      )
+      .orderBy(desc("montant_total_usd"))
 
     // TODO 6: Identifier les clients Premium qui ont acheté des Electronics
     // Afficher : customer_name, product_name, total_amount_usd
-
+    val premiumElectronics = salesInUSD
+      .filter(col("membership") === "Premium" && col("category") === "Electronics")
+      .select("customer_name", "product_name", "total_amount_usd")
+      .orderBy("customer_name")
   }
 }
